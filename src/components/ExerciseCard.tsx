@@ -7,7 +7,7 @@ export function ExerciseCard({ ...rest }: Props) {
   return (
     <TouchableOpacity {...rest}>
       <HStack
-        bg="gray.500"
+        bg="gray.700"
         alignItems="center"
         p={2}
         pr={4}
