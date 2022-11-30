@@ -39,7 +39,7 @@ export function SignIn() {
             autoCapitalize="none"
           />
           <Input placeholder="Senha" secureTextEntry />
-          <Button title="Acessar" />
+          <Button title="Criar e acessar" />
         </Center>
 
         <Text
