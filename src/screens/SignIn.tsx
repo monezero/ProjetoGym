@@ -1,16 +1,57 @@
-import { VStack, Image, Text, Center, Heading, ScrollView } from "native-base";
+import {
+  VStack,
+  Image,
+  Text,
+  Center,
+  Heading,
+  ScrollView,
+  useToast,
+} from "native-base";
 import BackgroundImg from "@assets/background.png";
 import LogoSvg from "@assets/logo.svg";
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "@hooks/useAuth";
 import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
+import { useState } from "react";
+import { AppError } from "@utils/AppError";
+
+type FormData = {
+  email: string;
+  password: string;
+};
+
 export function SignIn() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { signIn } = useAuth();
+
   const navigation = useNavigation<AuthNavigatorRoutesProps>();
+  const toast = useToast();
 
   function handleNewAccount() {
     navigation.navigate("signUp");
   }
+
+  async function handleSignIn({ email, password }: FormData) {
+    try {
+      setIsLoading(true);
+      await signIn(email, password);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível entrar. tente novamente mais tarde";
+      setIsLoading(false);
+      toast.show({
+        title,
+        placement: "top",
+        bgColor: "red.500",
+      });
+    }
+  }
+
   return (
     <ScrollView
       contentContainerStyle={{ flexGrow: 1 }}
@@ -56,6 +97,7 @@ export function SignIn() {
           title="Criar Conta"
           variant="outline"
           onPress={handleNewAccount}
+          isLoading={isLoading}
         />
       </VStack>
     </ScrollView>

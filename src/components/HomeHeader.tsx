@@ -2,13 +2,14 @@ import { HStack, Text, Heading, VStack, Icon } from "native-base";
 import { MaterialIcons } from "@expo/vector-icons";
 import { UserPhoto } from "./UserPhoto";
 import { TouchableOpacity } from "react-native";
+import { useAuth } from "@hooks/useAuth";
+import defaultUserPhotoImg from "@assets/userPhotoDefault.png";
 export function HomeHeader() {
+  const { user, signOut } = useAuth();
   return (
     <HStack bg="gray.800" pt={16} pb={5} px={8} alignItems="center">
       <UserPhoto
-        source={{
-          uri: "https://media.discordapp.net/attachments/415681919259508738/1041016519762645053/image.png?width=601&height=676",
-        }}
+        source={user.avatar ? { uri: user.avatar } : defaultUserPhotoImg}
         size={16}
         alt="Foto não carregada"
         mr={4}
@@ -19,10 +20,10 @@ export function HomeHeader() {
         </Text>
 
         <Heading color="gray.100" fontSize="md" fontFamily="heading">
-          João
+          {user.name}
         </Heading>
       </VStack>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={signOut}>
         <Icon as={MaterialIcons} name="logout" color="gray.200" size={7} />
       </TouchableOpacity>
 
