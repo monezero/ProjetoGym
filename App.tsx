@@ -10,6 +10,7 @@ import { THEME } from "./src/theme";
 import { SignIn } from "@screens/SignIn";
 import { SignUp } from "@screens/SignUp";
 import { Routes } from "./src/routes";
+import { Exercise } from "@screens/Exercise";
 import { AuthContextProvider } from "@contexts/AuthContext";
 export default function App() {
   const [fontsLoaded] = useFonts({
