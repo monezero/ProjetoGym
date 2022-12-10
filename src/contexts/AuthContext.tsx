@@ -3,6 +3,7 @@ import { createContext, ReactNode, useEffect, useState } from "react";
 import { api } from "@services/api";
 export type AuthContextDataProps = {
   user: UserDTO;
+  updateUserProfile: (userUpdated: UserDTO) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isLoadingUserStorageData: boolean;
@@ -82,6 +83,15 @@ export function AuthContextProvider({ children }: authContextProviderProps) {
     }
   }
 
+  async function updateUserProfile(userUpdated: UserDTO) {
+    try {
+      setUser(userUpdated);
+      await storageUserSave(userUpdated);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async function loadUserData() {
     setIsLoadingUserStorageData(true);
 
@@ -99,6 +109,7 @@ export function AuthContextProvider({ children }: authContextProviderProps) {
     <AuthContext.Provider
       value={{
         user,
+        updateUserProfile,
         signIn,
         isLoadingUserStorageData,
         signOut,

@@ -19,6 +19,9 @@ import { Controller, useForm } from "react-hook-form";
 import { useAuth } from "@hooks/useAuth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+import defaultUserPhotoImg from "@assets/userPhotoDefault.png";
 
 type FormDataProps = {
   name: string;
@@ -41,17 +44,19 @@ const profileSchema = yup.object({
     .oneOf([yup.ref("password"), null], "A confirmação de senha não confere")
     .when("password", {
       is: (Field: any) => Field,
-      then: yup.string().nullable().required("Informe a confirmação da senha"),
+      then: yup
+        .string()
+        .nullable()
+        .required("Informe a confirmação da senha")
+        .transform((value) => (!!value ? value : null)),
     }),
 });
 export function Profile() {
+  const [isUpdating, setUpdating] = useState(false);
   const [photoIsLoading, setPhotoIsLoading] = useState(false);
-  const [userPhoto, setUserPhoto] = useState(
-    "https://media.discordapp.net/attachments/415681919259508738/1041016519762645053/image.png?width=416&height=468"
-  );
 
   const toast = useToast();
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const {
     control,
     handleSubmit,
@@ -89,10 +94,38 @@ export function Profile() {
             size: "1.5",
           });
         }
-        setUserPhoto(photoSelected.assets[0].uri);
-      }
+        const fileExtension = photoSelected.assets[0].uri.split(".").pop;
+        console.log(fileExtension);
 
-      setUserPhoto(photoSelected.assets[0].uri);
+        const photoFile = {
+          name: `${user.name}.${fileExtension}`.toLowerCase(),
+          uri: photoSelected.assets[0].uri,
+          type: `${photoSelected.assets[0].type}/${fileExtension}`,
+        } as any;
+
+        const userPhotoUploadForm = new FormData();
+        userPhotoUploadForm.append("avatar", photoFile);
+
+        const avatarUpdatedResponse = await api.patch(
+          `/users/avatar`,
+          userPhotoUploadForm,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        const userUpdated = user;
+        userUpdated.avatar = avatarUpdatedResponse.data.avatar;
+        updateUserProfile(userUpdated);
+
+        toast.show({
+          title: "Foto atualizada!",
+          placement: "top",
+          bgColor: "green.500",
+        });
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -101,7 +134,34 @@ export function Profile() {
   }
 
   async function handleProfileUpdate(data: FormDataProps) {
-    console.log(data);
+    try {
+      setUpdating(true);
+
+      const userUpdated = user;
+      userUpdated.name = data.name;
+
+      await api.put("/users", data);
+
+      await updateUserProfile(userUpdated);
+      toast.show({
+        title: "Perfil atualizado com sucesso",
+        placement: "top",
+        bgColor: "green.500",
+      });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível atualizar os dados. Tente novamente mais tarde";
+
+      toast.show({
+        title,
+        placement: "top",
+        bgColor: "red.500",
+      });
+    } finally {
+      setUpdating(false);
+    }
   }
   const PHOTO_SIZE = 125;
   return (
@@ -119,9 +179,11 @@ export function Profile() {
             />
           ) : (
             <UserPhoto
-              source={{
-                uri: userPhoto,
-              }}
+              source={
+                user.avatar
+                  ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }
+                  : defaultUserPhotoImg
+              }
               alt="Foto do usuário"
               size={PHOTO_SIZE}
             />
@@ -220,6 +282,7 @@ export function Profile() {
             title="Atualizar"
             mt={4}
             onPress={handleSubmit(handleProfileUpdate)}
+            isLoading={isUpdating}
           />
         </VStack>
       </ScrollView>
